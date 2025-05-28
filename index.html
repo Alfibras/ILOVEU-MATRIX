@@ -516,6 +516,7 @@
 
   // Función para manejar el efecto continuo al presionar el ratón
   let isMouseDown = false;
+  let isTouching = false;
 
   canvas.addEventListener('mousedown', (e) => {
     isMouseDown = true;
@@ -539,6 +540,36 @@
       }
     }
   });
+
+  // Función para manejar el efecto continuo al tocar en dispositivos táctiles
+  canvas.addEventListener('touchstart', (e) => {
+    isTouching = true;
+    console.log('touchstart', e.touches[0].clientX, e.touches[0].clientY);
+    e.preventDefault(); // Evitar el scroll por defecto en touchmove
+    const touch = e.touches[0];
+    const particleCount = 5;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle(touch.clientX, touch.clientY));
+    }
+  });
+
+  canvas.addEventListener('touchend', () => {
+    isTouching = false;
+    console.log('touchend');
+  });
+
+  canvas.addEventListener('touchmove', (e) => {
+    if (isTouching) {
+      console.log('touchmove', e.touches[0].clientX, e.touches[0].clientY);
+      e.preventDefault(); // Evitar el scroll por defecto en touchmove
+      const touch = e.touches[0];
+      const particleCount = 5;
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle(touch.clientX, touch.clientY));
+      }
+    }
+  });
 </script>
 </body>
 </html>
+
