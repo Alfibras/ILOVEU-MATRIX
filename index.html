@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Te Amo Matrix</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .control-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      color: white;
+      z-index: 2;
+      font-family: Arial, sans-serif;
+      min-width: 250px;
+    }
+
+    .control-panel input, .control-panel button {
+      margin: 10px 0;
+      padding: 5px;
+      width: 100%;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .control-panel button {
+      background: #ff69b4;
+      color: white;
+      cursor: pointer;
+      padding: 10px;
+      font-weight: bold;
+    }
+
+    .control-panel button:hover {
+      background: #ff1493;
+    }
+
+    .control-panel label {
+      display: block;
+      margin-top: 10px;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .speed-control input[type="range"] {
+      flex: 1;
+    }
+
+    .speed-value {
+      min-width: 40px;
+      text-align: right;
+    }
+
+    .section-title {
+      color: #ff69b4;
+      font-weight: bold;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      border-bottom: 1px solid #ff69b4;
+      padding-bottom: 5px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .button-group button {
+      flex: 1;
+    }
+
+    #downloadBtn {
+      background: #4CAF50;
+    }
+
+    #downloadBtn:hover {
+      background: #45a049;
+    }
+
+    #previewBtn {
+      background: #2196F3;
+    }
+
+    #previewBtn:hover {
+      background: #1976D2;
+    }
+
+    .download-section {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #ff69b4;
+    }
+
+    .preview-window {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 3;
+      display: none;
+    }
+
+    .preview-window.active {
+      display: block;
+    }
+
+    .preview-window h3 {
+      color: #ff69b4;
+      margin-top: 0;
+    }
+
+    .preview-window p {
+      margin: 10px 0;
+    }
+
+    .preview-window button {
+      background: #ff69b4;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .preview-window button:hover {
+      background: #ff1493;
+    }
+  </style>
+</head>
+<body>
+<canvas id="matrixCanvas"></canvas>
+
+<div class="control-panel">
+  <div class="section-title">Efecto de Lluvia</div>
+  <label for="message">Texto de la lluvia:</label>
+  <input type="text" id="message" value="TE AMO" placeholder="Escribe tu mensaje">
+  
+  <div class="section-title">Efecto de Clic</div>
+  <label for="clickMessage">Texto al hacer clic:</label>
+  <input type="text" id="clickMessage" value="TE AMO" placeholder="Texto para el efecto de clic">
+  
+  <div class="section-title">Ajustes Generales</div>
+  <label for="colorPicker">Color:</label>
+  <input type="color" id="colorPicker" value="#ff69b4">
+  
+  <div class="speed-control">
+    <label for="speed">Velocidad:</label>
+    <input type="range" id="speed" min="1" max="10" value="5">
+    <span class="speed-value">5</span>
+  </div>
+  
+  <div class="section-title download-section">Descargar</div>
+  <label for="fileName">Nombre del archivo:</label>
+  <input type="text" id="fileName" value="matrix-effect" placeholder="Nombre del archivo">
+  
+  <div class="button-group">
+    <button id="applyChanges">Aplicar Cambios</button>
+    <button id="previewBtn">Vista Previa</button>
+    <button id="downloadBtn">Descargar</button>
+  </div>
+</div>
+
+<div class="preview-window" id="previewWindow">
+  <h3>Vista Previa</h3>
+  <p>Se abrirá una nueva ventana con el efecto.</p>
+  <p>Configuración actual:</p>
+  <ul>
+    <li>Texto de lluvia: <span id="previewRainText"></span></li>
+    <li>Texto de clic: <span id="previewClickText"></span></li>
+    <li>Color: <span id="previewColor"></span></li>
+    <li>Velocidad: <span id="previewSpeed"></span></li>
+  </ul>
+  <button id="confirmPreview">Abrir Vista Previa</button>
+  <button id="cancelPreview">Cancelar</button>
+</div>
+
+<script>
+  const canvas = document.getElementById('matrixCanvas');
+  const ctx = canvas.getContext('2d');
+  const messageInput = document.getElementById('message');
+  const clickMessageInput = document.getElementById('clickMessage');
+  const colorPicker = document.getElementById('colorPicker');
+  const speedSlider = document.getElementById('speed');
+  const speedValue = document.querySelector('.speed-value');
+  const applyButton = document.getElementById('applyChanges');
+  const downloadButton = document.getElementById('downloadBtn');
+  const previewButton = document.getElementById('previewBtn');
+  const fileNameInput = document.getElementById('fileName');
+  const previewWindow = document.getElementById('previewWindow');
+  const confirmPreviewBtn = document.getElementById('confirmPreview');
+  const cancelPreviewBtn = document.getElementById('cancelPreview');
+
+  // Elementos de la vista previa
+  const previewRainText = document.getElementById('previewRainText');
+  const previewClickText = document.getElementById('previewClickText');
+  const previewColor = document.getElementById('previewColor');
+  const previewSpeed = document.getElementById('previewSpeed');
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const fontSize = 35;
+  const columns = Math.floor(canvas.width / fontSize);
+  const drops = new Array(columns).fill(0);
+  let message = "TE AMO";
+  let clickMessage = "TE AMO";
+  let currentColor = "#ff69b4";
+  let currentSpeed = 5;
+  let particles = [];
+
+  // Actualizar valor de velocidad mostrado
+  speedSlider.addEventListener('input', (e) => {
+    speedValue.textContent = e.target.value;
+  });
+
+  class Particle {
+    constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.speed = 2 + Math.random() * 3;
+      this.angle = Math.random() * Math.PI * 2;
+      this.size = fontSize;
+      this.opacity = 1;
+      this.fadeSpeed = 0.02;
+    }
+
+    update() {
+      this.x += Math.cos(this.angle) * this.speed;
+      this.y += Math.sin(this.angle) * this.speed;
+      this.opacity -= this.fadeSpeed;
+    }
+
+    draw() {
+      ctx.font = this.size + 'px monospace';
+      ctx.fillStyle = currentColor + Math.floor(this.opacity * 255).toString(16).padStart(2, '0');
+      ctx.fillText(clickMessage, this.x, this.y);
+    }
+  }
+
+  function draw() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = 'bold ' + fontSize + 'px monospace';
+    ctx.fillStyle = currentColor;
+
+    for (let i = 0; i < drops.length; i++) {
+      const x = i * fontSize;
+      const y = drops[i] * fontSize;
+
+      ctx.shadowColor = currentColor;
+      ctx.shadowBlur = 15;
+      ctx.fillText(message, x, y);
+      
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fillText(message, x + 1, y + 1);
+      
+      ctx.fillStyle = currentColor;
+
+      if (y > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i] += currentSpeed / 5;
+    }
+
+    particles = particles.filter(particle => {
+      particle.update();
+      particle.draw();
+      return particle.opacity > 0;
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  // Efecto al hacer clic
+  canvas.addEventListener('click', (e) => {
+    const particleCount = 20;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle(e.clientX, e.clientY));
+    }
+  });
+
+  // Aplicar cambios
+  applyButton.addEventListener('click', () => {
+    message = messageInput.value || "TE AMO";
+    clickMessage = clickMessageInput.value || "TE AMO";
+    currentColor = colorPicker.value;
+    currentSpeed = parseInt(speedSlider.value);
+    particles = [];
+  });
+
+  // Función para generar el código del efecto
+  function generateEffectCode(config) {
+    const html = document.createElement('html');
+    html.lang = 'es';
+
+    const head = document.createElement('head');
+    const meta = document.createElement('meta');
+    meta.charset = 'UTF-8';
+    head.appendChild(meta);
+    const title = document.createElement('title');
+    title.textContent = 'Matrix Effect';
+    head.appendChild(title);
+    const style = document.createElement('style');
+    style.textContent = `
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #000;
+        overflow: hidden;
+        height: 100%;
+      }
+      canvas {
+        display: block;
+      }
+    `;
+    head.appendChild(style);
+    html.appendChild(head);
+
+    const body = document.createElement('body');
+    const canvas = document.createElement('canvas');
+    canvas.id = 'matrixCanvas';
+    body.appendChild(canvas);
+
+    const script = document.createElement('script');
+    script.textContent = `
+      const canvas = document.getElementById('matrixCanvas');
+      const ctx = canvas.getContext('2d');
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const fontSize = 35;
+      const columns = Math.floor(canvas.width / fontSize);
+      const drops = new Array(columns).fill(0);
+      const message = "${config.message}";
+      const clickMessage = "${config.clickMessage}";
+      const currentColor = "${config.color}";
+      const currentSpeed = ${config.speed};
+      let particles = [];
+
+      class Particle {
+        constructor(x, y) {
+          this.x = x;
+          this.y = y;
+          this.speed = 2 + Math.random() * 3;
+          this.angle = Math.random() * Math.PI * 2;
+          this.size = fontSize;
+          this.opacity = 1;
+          this.fadeSpeed = 0.02;
+        }
+
+        update() {
+          this.x += Math.cos(this.angle) * this.speed;
+          this.y += Math.sin(this.angle) * this.speed;
+          this.opacity -= this.fadeSpeed;
+        }
+
+        draw() {
+          ctx.font = this.size + 'px monospace';
+          ctx.fillStyle = currentColor + Math.floor(this.opacity * 255).toString(16).padStart(2, '0');
+          ctx.fillText(clickMessage, this.x, this.y);
+        }
+      }
+
+      function draw() {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.font = 'bold ' + fontSize + 'px monospace';
+        ctx.fillStyle = currentColor;
+
+        for (let i = 0; i < drops.length; i++) {
+          const x = i * fontSize;
+          const y = drops[i] * fontSize;
+
+          ctx.shadowColor = currentColor;
+          ctx.shadowBlur = 15;
+          ctx.fillText(message, x, y);
+
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+          ctx.fillText(message, x + 1, y + 1);
+
+          ctx.fillStyle = currentColor;
+
+          if (y > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+          }
+          drops[i] += currentSpeed / 5;
+        }
+
+        particles = particles.filter(particle => {
+          particle.update();
+          particle.draw();
+          return particle.opacity > 0;
+        });
+
+        requestAnimationFrame(draw);
+      }
+
+      canvas.addEventListener('click', (e) => {
+        const particleCount = 20;
+        for (let i = 0; i < particleCount; i++) {
+          particles.push(new Particle(e.clientX, e.clientY));
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      });
+
+      draw();
+    `;
+    body.appendChild(script);
+
+    html.appendChild(body);
+
+    const doctype = '<!DOCTYPE html>';
+    return doctype + html.outerHTML;
+  }
+
+  // Función para mostrar la vista previa
+  previewButton.addEventListener('click', () => {
+    const config = {
+      message: messageInput.value || "TE AMO",
+      clickMessage: clickMessageInput.value || "TE AMO",
+      color: colorPicker.value,
+      speed: speedSlider.value
+    };
+
+    // Actualizar información en la ventana de vista previa
+    previewRainText.textContent = config.message;
+    previewClickText.textContent = config.clickMessage;
+    previewColor.textContent = config.color;
+    previewSpeed.textContent = config.speed;
+
+    previewWindow.classList.add('active');
+  });
+
+  // Función para abrir la vista previa
+  confirmPreviewBtn.addEventListener('click', () => {
+    const config = {
+      message: messageInput.value || "TE AMO",
+      clickMessage: clickMessageInput.value || "TE AMO",
+      color: colorPicker.value,
+      speed: speedSlider.value
+    };
+
+    const previewCode = generateEffectCode(config);
+    const blob = new Blob([previewCode], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    previewWindow.classList.remove('active');
+  });
+
+  // Función para cancelar la vista previa
+  cancelPreviewBtn.addEventListener('click', () => {
+    previewWindow.classList.remove('active');
+  });
+
+  // Función para descargar el archivo
+  downloadButton.addEventListener('click', () => {
+    const config = {
+      message: messageInput.value,
+      clickMessage: clickMessageInput.value,
+      color: colorPicker.value,
+      speed: speedSlider.value
+    };
+
+    const fileName = fileNameInput.value.trim() || 'matrix-effect';
+    const safeFileName = fileName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+
+    const template = generateEffectCode(config);
+
+    const blob = new Blob([template], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safeFileName}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  // Redimensionar canvas
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  draw();
+</script>
+</body>
+</html>
+
