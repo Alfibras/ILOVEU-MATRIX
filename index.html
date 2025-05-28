@@ -165,7 +165,7 @@
   
   <div class="section-title">Efecto de Clic</div>
   <label for="clickMessage">Texto al hacer clic:</label>
-  <input type="text" id="clickMessage" value="TE AMO" placeholder="Texto para el efecto de clic">
+  <input type="text" id="clickMessage" value="💗" placeholder="Texto para el efecto de clic">
   
   <div class="section-title">Ajustes Generales</div>
   <label for="colorPicker">Color:</label>
@@ -179,7 +179,7 @@
   
   <div class="section-title download-section">Descargar</div>
   <label for="fileName">Nombre del archivo:</label>
-  <input type="text" id="fileName" value="matrix-effect" placeholder="Nombre del archivo">
+  <input type="text" id="fileName" value="TE AMOO <3" placeholder="Nombre del archivo">
   
   <div class="button-group">
     <button id="applyChanges">Aplicar Cambios</button>
@@ -231,9 +231,9 @@
   const columns = Math.floor(canvas.width / fontSize);
   const drops = new Array(columns).fill(0);
   let message = "TE AMO";
-  let clickMessage = "TE AMO";
+  let clickMessage = "💗";
   let currentColor = "#ff69b4";
-  let currentSpeed = 5;
+  let currentSpeed = 4;
   let particles = [];
 
   // Actualizar valor de velocidad mostrado
@@ -301,18 +301,10 @@
     requestAnimationFrame(draw);
   }
 
-  // Efecto al hacer clic
-  canvas.addEventListener('click', (e) => {
-    const particleCount = 20;
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle(e.clientX, e.clientY));
-    }
-  });
-
   // Aplicar cambios
   applyButton.addEventListener('click', () => {
     message = messageInput.value || "TE AMO";
-    clickMessage = clickMessageInput.value || "TE AMO";
+    clickMessage = clickMessageInput.value || "💗";
     currentColor = colorPicker.value;
     currentSpeed = parseInt(speedSlider.value);
     particles = [];
@@ -454,7 +446,7 @@
   previewButton.addEventListener('click', () => {
     const config = {
       message: messageInput.value || "TE AMO",
-      clickMessage: clickMessageInput.value || "TE AMO",
+      clickMessage: clickMessageInput.value || "💗",
       color: colorPicker.value,
       speed: speedSlider.value
     };
@@ -472,7 +464,7 @@
   confirmPreviewBtn.addEventListener('click', () => {
     const config = {
       message: messageInput.value || "TE AMO",
-      clickMessage: clickMessageInput.value || "TE AMO",
+      clickMessage: clickMessageInput.value || "💗",
       color: colorPicker.value,
       speed: speedSlider.value
     };
@@ -521,7 +513,32 @@
   });
 
   draw();
+
+  // Función para manejar el efecto continuo al presionar el ratón
+  let isMouseDown = false;
+
+  canvas.addEventListener('mousedown', (e) => {
+    isMouseDown = true;
+    // Generar partículas inmediatamente al hacer click inicial
+    const particleCount = 5;
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle(e.clientX, e.clientY));
+    }
+  });
+
+  canvas.addEventListener('mouseup', () => {
+    isMouseDown = false;
+  });
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (isMouseDown) {
+      // Generar partículas continuamente mientras se mueve el ratón y el botón está presionado
+      const particleCount = 5;
+      for (let i = 0; i < particleCount; i++) {
+        particles.push(new Particle(e.clientX, e.clientY));
+      }
+    }
+  });
 </script>
 </body>
 </html>
-
